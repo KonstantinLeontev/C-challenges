@@ -1,0 +1,19 @@
+# Ignore all files at all
+*
+
+# unignore parent folder
+!*/
+
+# unignore all sources files
+!*.cpp
+!*.h
+
+# unignore vs project and solution files
+!*.vcxproj
+!*.sln
+
+# unignore README file
+!README
+
+# unignore .gitignore
+!.gitignore
