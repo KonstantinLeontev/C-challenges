@@ -2,6 +2,8 @@
 #include <vector>
 #include <string>
 
+enum DIRECTION { NONE, VERT, HORIZ };
+
 void getWordsFromString(std::vector<std::string> &words, const std::string &hints) {
 	int size = hints.size();
 	std::string temp{};
@@ -21,6 +23,7 @@ void getWordsFromString(std::vector<std::string> &words, const std::string &hint
 void puzzleSolution(
 	std::vector<std::string> &crossword, const std::vector<std::string> &words, int &wordQuant, int wordCnt) {
 	int charCnt{};
+	DIRECTION pos = VERT;
 	for (int i = 0; i < 10; i++) {
 		for (int j = 0; j < 10; j++) {
 			if (crossword[i][j] != '+') {
@@ -43,6 +46,91 @@ void puzzleSolution(
 	}
 }
 
+void recPuzzleSolution(
+	std::vector<std::string> &crossword, // Main grid.
+	const std::vector<std::string> &words, // Words to place into grid.
+	int wordCnt, // Words counter.
+	int wordCharCnt, // Word character counter.
+	int i, // Row's number.
+	int j, // Column's number.
+	DIRECTION dir // direction - none, vert or horizontal.
+) {
+	// Function works until there are some place in grid and words to place in.
+	if (i < 10 && j < 10 && wordCnt < words.size()) {
+
+		// Tere's no free place here.
+		if (crossword[i][j] == '+') {
+			// If current word haven't started yet.
+			if (!wordCharCnt) {
+				// If it's no last place in the row and current word isn't vertical.
+				if (j < 9) {
+					recPuzzleSolution(crossword, words, wordCnt, wordCharCnt, i, j + 1, dir);
+				}
+				// Else if it's no last row jump to the start of the next row.
+				else if (i < 9) {
+					recPuzzleSolution(crossword, words, wordCnt, wordCharCnt, i + 1, 0, dir);
+				}
+			}
+			// Else try next word from grid's beginning.
+			else {
+				recPuzzleSolution(crossword, words, wordCnt + 1, 0, 0, 0, NONE);
+			}
+		}
+
+		// It's a free place to put char here.
+		else if (crossword[i][j] == '-') {
+			// Put char in that place.
+			crossword[i][j] = words[wordCnt][wordCharCnt];
+			// Increment char counter then and call function again for next char.
+
+			// TODO!!!
+			recPuzzleSolution(crossword, words, wordCnt + 1, wordCharCnt + 1, 0, 0, dir);
+		}
+
+		// Else we have to check for crossing with already placed words.
+		else {
+
+			// If current carachters are the same.
+			if (crossword[i][j] == words[wordCnt][wordCharCnt]) {
+				// If it's a first char in the current word.
+				if (!wordCharCnt) {
+					// Check for free positions to the right.
+					if (j < 9 && crossword[i][j + 1] == '-') {
+						// Go to the right to put next char there. Set direction flag to HORIZ.
+						recPuzzleSolution(crossword, words, wordCnt, wordCharCnt + 1, i, j + 1, HORIZ);
+					}
+					// Check for position to the down.
+					else if (i < 9 && crossword[i + 1][j] == '-') {
+						// Go down and place next char there. Set direction flag to VERT.
+						recPuzzleSolution(crossword, words, wordCnt, wordCharCnt + 1, i + 1, j, VERT);
+					}
+				}
+				// Else if it's a last char in the current word.
+				else if (wordCharCnt == words[wordCnt].size() - 1) {
+					// Current word is complete and we can call next word.
+					recPuzzleSolution(crossword, words, wordCnt + 1, 0, 0, 0, NONE);
+				}
+
+				// Else we have to check next position in the current direction.
+				else {
+					// If the word is horizontal and we have free place on the right.
+					if (dir == HORIZ && j < 9 && crossword[i][j + 1] == '-') {
+						// TODO
+					}
+					// If word is vertical and we have free place down.
+					else if (dir == VERT && i < 9 && crossword[i + 1][j] == '-') {
+						// TODO
+					}
+				}
+			}	
+			// Else current word doesn't fit and we have to try next word.
+			else {
+				recPuzzleSolution(crossword, words, wordCnt + 1, 0, 0, 0, NONE);
+			}
+		}
+	}
+}
+
 void crosswordPuzzle(std::vector<std::string> &crossword, std::string &hints) {
 	// Make the vector with words in it.
 	std::vector<std::string> words(0);
@@ -56,6 +144,8 @@ void crosswordPuzzle(std::vector<std::string> &crossword, std::string &hints) {
 int main() {
 	// Read crossword grid from the buffer.
 	std::vector<std::string> crossword(10);
+	std::vector<std::string> words;
+
 	for (int i = 0; i < 10; i++) {
 		std::cin >> crossword[i];
 	}
@@ -64,7 +154,13 @@ int main() {
 	std::cin >> hints;
 
 	// Fill crossword with given words.
-	crosswordPuzzle(crossword, hints);
+	// crosswordPuzzle(crossword, hints);
+
+	// Get words from hints input.
+	getWordsFromString(words, hints);
+
+	// Fill crossword with given words.
+	recPuzzleSolution(crossword, words, 0, 0, 0, 0, NONE);
 
 	// Output crossword onto the screen.
 	std::cout << crossword[0]; // Just first line.
