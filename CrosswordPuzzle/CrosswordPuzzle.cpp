@@ -18,6 +18,8 @@ void getWordsFromString(std::vector<std::string> &words, const std::string &hint
 			firstChar = i + 1;
 		}
 	}
+	temp = hints.substr(firstChar, hints.back());
+	words.push_back(temp);
 }
 
 void puzzleSolution(
@@ -56,7 +58,7 @@ void recPuzzleSolution(
 	DIRECTION dir // direction - none, vert or horizontal.
 ) {
 	// Function works until there are some place in grid and words to place in.
-	if (i < 10 && j < 10 && wordCnt < words.size()) {
+	if (i < 10 && j < 10 && wordCnt < words.size() && wordCharCnt < words[wordCnt].size()) {
 
 		// Tere's no free place here.
 		if (crossword[i][j] == '+') {
@@ -70,6 +72,10 @@ void recPuzzleSolution(
 				else if (i < 9) {
 					recPuzzleSolution(crossword, words, wordCnt, wordCharCnt, i + 1, 0, dir);
 				}
+				//// Else try next word from beginning.
+				//else {
+				//	recPuzzleSolution(crossword, words, wordCnt + 1, 0, 0, 0, NONE);
+				//}
 			}
 			// Else try next word from grid's beginning.
 			else {
@@ -81,10 +87,17 @@ void recPuzzleSolution(
 		else if (crossword[i][j] == '-') {
 			// Put char in that place.
 			crossword[i][j] = words[wordCnt][wordCharCnt];
-			// Increment char counter then and call function again for next char.
 
-			// TODO!!!
-			recPuzzleSolution(crossword, words, wordCnt + 1, wordCharCnt + 1, 0, 0, dir);
+			// Check for next place on the right.
+			if (j < 9 && crossword[i][j + 1] != '+' && (dir == NONE || dir == HORIZ)) {
+				recPuzzleSolution(crossword, words, wordCnt, wordCharCnt + 1, i, j + 1, HORIZ);
+			}
+			// Check for the next place down.
+			if (i < 9 && crossword[i + 1][j] != '+' && (dir == NONE || dir == VERT)) {
+				recPuzzleSolution(crossword, words, wordCnt, wordCharCnt + 1, i + 1, j, VERT);
+			}
+			// Call the function again for the next word.
+			recPuzzleSolution(crossword, words, wordCnt + 1, 0, 0, 0, NONE);
 		}
 
 		// Else we have to check for crossing with already placed words.
@@ -115,14 +128,26 @@ void recPuzzleSolution(
 				else {
 					// If the word is horizontal and we have free place on the right.
 					if (dir == HORIZ && j < 9 && crossword[i][j + 1] == '-') {
-						// TODO
+						recPuzzleSolution(crossword, words, wordCnt, wordCharCnt + 1, i, j + 1, dir);
 					}
 					// If word is vertical and we have free place down.
 					else if (dir == VERT && i < 9 && crossword[i + 1][j] == '-') {
-						// TODO
+						recPuzzleSolution(crossword, words, wordCnt, wordCharCnt + 1, i + 1, j, dir);
 					}
 				}
-			}	
+			}
+
+			// Else if this is a first char in the given word.
+			else if (!wordCharCnt) {
+				// Just go to the next.
+				if (j < 9) {
+					recPuzzleSolution(crossword, words, wordCnt, wordCharCnt, i, j + 1, dir);
+				}
+				else if (i < 9) {
+					recPuzzleSolution(crossword, words, wordCnt, wordCharCnt, i + 1, 0, dir);
+				}
+			}
+
 			// Else current word doesn't fit and we have to try next word.
 			else {
 				recPuzzleSolution(crossword, words, wordCnt + 1, 0, 0, 0, NONE);
